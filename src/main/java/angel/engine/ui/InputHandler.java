@@ -8,21 +8,36 @@ import javafx.scene.input.KeyEvent;
 public class InputHandler {
     private final Engine engine;
     private final GameState state;
-    private final Runnable redrawAction;
+    private final Runnable redraw;
 
-    public InputHandler(Engine engine, GameState state, Runnable redrawAction) {
+    private long lastMoveTime = 0;
+    private static final long MOVE_DELAY_MS = 150;
+
+    public InputHandler(Engine engine, GameState state, Runnable redraw) {
         this.engine = engine;
         this.state = state;
-        this.redrawAction = redrawAction;
+        this.redraw = redraw;
     }
 
     public void handle(KeyEvent event) {
+        long now = System.currentTimeMillis();
+
+        if (now - lastMoveTime < MOVE_DELAY_MS) {
+            return;
+        }
         KeyCode code = event.getCode();
-        if (code == KeyCode.W) engine.move(state, 0, -1);
-        if (code == KeyCode.S) engine.move(state, 0, 1);
-        if (code == KeyCode.A) engine.move(state, -1, 0);
-        if (code == KeyCode.D) engine.move(state, 1, 0);
-        redrawAction.run();
+        boolean moved = false;
+
+        if (code == KeyCode.W) moved = engine.move(state, 0, -1);
+        if (code == KeyCode.S) moved = engine.move(state, 0, 1);
+        if (code == KeyCode.A) moved = engine.move(state, -1, 0);
+        if (code == KeyCode.D) moved = engine.move(state, 1, 0);
+
+        if (moved) {
+            lastMoveTime = now;
+            redraw.run();
+        }
+
     }
 
 }

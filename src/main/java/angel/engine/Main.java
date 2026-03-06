@@ -28,23 +28,24 @@ public class Main extends Application {
         int[][] map = LevelLoader.loadMap("level_1.json");
         
         state = new GameState(map);
-        
+
         engine = new Engine();
         
         canvas = new Canvas(state.map_width * TILE, state.map_height * TILE);
         graphics = canvas.getGraphicsContext2D();
-        
+
         BorderPane root = new BorderPane(canvas);
         Scene scene = new Scene(root);
-        
+
         InputHandler inputHandler = new InputHandler(engine, state, this::draw);
         scene.setOnKeyPressed(inputHandler::handle);
-        
+
         draw();
 
         stage.setTitle("Angel Engine");
         stage.setScene(scene);
         stage.show();
+        root.requestFocus();
     }
 
     private void draw() {
