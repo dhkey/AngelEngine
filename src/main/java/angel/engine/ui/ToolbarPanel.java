@@ -9,11 +9,12 @@ import javafx.scene.control.ToolBar;
 
 public class ToolbarPanel extends ToolBar {
 
-    public ToolbarPanel(Runnable onReset, Consumer<Boolean> onGridToggle, boolean gridEnabled,
-                        Consumer<Boolean> onBuildToggle, boolean buildEnabled) {
-        Button resetButton = new Button("Reset player");
-        resetButton.setOnAction(e -> onReset.run());
-
+    public ToolbarPanel(Runnable onRestart,
+                        Consumer<Boolean> onGridToggle, boolean gridEnabled,
+                        Consumer<Boolean> onBuildToggle, boolean buildEnabled,
+                        Runnable onSave, Runnable onExit, boolean showBuildToggle) {
+        Button restartButton = new Button("Restart level");
+        restartButton.setOnAction(e -> onRestart.run());
         CheckBox gridToggle = new CheckBox("Grid");
         gridToggle.setSelected(gridEnabled);
         gridToggle.setOnAction(e -> onGridToggle.accept(gridToggle.isSelected()));
@@ -22,7 +23,25 @@ public class ToolbarPanel extends ToolBar {
         buildToggle.setSelected(buildEnabled);
         buildToggle.setOnAction(e -> onBuildToggle.accept(buildToggle.isSelected()));
 
-        getItems().addAll(resetButton, new Separator(), gridToggle, buildToggle);
+        if (onExit != null) {
+            Button exitButton = new Button("Back");
+            exitButton.setOnAction(e -> onExit.run());
+            getItems().add(exitButton);
+        }
+
+        getItems().add(restartButton);
+
+        if (onSave != null) {
+            Button saveButton = new Button("Save level");
+            saveButton.setOnAction(e -> onSave.run());
+            getItems().add(saveButton);
+        }
+
+        getItems().add(new Separator());
+        getItems().add(gridToggle);
+        if (showBuildToggle) {
+            getItems().add(buildToggle);
+        }
         setPadding(new Insets(4, 8, 4, 8));
     }
 }

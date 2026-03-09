@@ -32,6 +32,12 @@ public class MapRenderer {
         graphics.fillOval(state.playerX * tileSize + 6, state.playerY * tileSize + 6,
                 tileSize - 12, tileSize - 12);
 
+    graphics.setFill(Color.web("#b084f5"));
+    for (GameState.Portal portal : state.portals) {
+        graphics.fillOval(portal.x() * tileSize + 8, portal.y() * tileSize + 8,
+            tileSize - 16, tileSize - 16);
+    }
+
         graphics.restore();
     }
 }

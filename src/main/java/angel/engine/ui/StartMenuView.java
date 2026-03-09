@@ -1,6 +1,5 @@
 package angel.engine.ui;
 
-import java.util.function.Consumer;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -10,10 +9,12 @@ import javafx.scene.layout.VBox;
 
 public class StartMenuView {
 
-    private final Consumer<String> onSelectMode;
+    private final Runnable onCreate;
+    private final Runnable onEdit;
 
-    public StartMenuView(Consumer<String> onSelectMode) {
-        this.onSelectMode = onSelectMode;
+    public StartMenuView(Runnable onCreate, Runnable onEdit) {
+        this.onCreate = onCreate;
+        this.onEdit = onEdit;
     }
 
     public Scene createScene() {
@@ -22,11 +23,11 @@ public class StartMenuView {
 
         Button createButton = new Button("Create game");
         createButton.setPrefWidth(220);
-        createButton.setOnAction(e -> onSelectMode.accept("Create game"));
+    createButton.setOnAction(e -> onCreate.run());
 
         Button editButton = new Button("Edit game");
         editButton.setPrefWidth(220);
-        editButton.setOnAction(e -> onSelectMode.accept("Editing"));
+    editButton.setOnAction(e -> onEdit.run());
 
         VBox menu = new VBox(16, title, createButton, editButton);
         menu.setAlignment(Pos.CENTER);
