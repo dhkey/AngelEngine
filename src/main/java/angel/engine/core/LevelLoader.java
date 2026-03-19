@@ -34,11 +34,16 @@ public class LevelLoader {
     }
 
     public static void saveMap(Path path, int[][] map) throws Exception {
-        saveLevel(path, map, List.of(), null, null);
+        saveLevel(path, map, List.of(), List.of(), null, null);
     }
 
     public static void saveLevel(Path path, int[][] map, List<GameState.Portal> portals,
                                  Integer spawnX, Integer spawnY) throws Exception {
+        saveLevel(path, map, portals, List.of(), spawnX, spawnY);
+    }
+
+    public static void saveLevel(Path path, int[][] map, List<GameState.Portal> portals,
+                                 List<GameState.Enemy> enemies, Integer spawnX, Integer spawnY) throws Exception {
         ObjectMapper manager = new ObjectMapper();
         ObjectNode root = manager.createObjectNode();
         int height = map.length;
@@ -70,6 +75,16 @@ public class LevelLoader {
         }
         root.set("portals", portalNodes);
 
+        ArrayNode enemyNodes = manager.createArrayNode();
+        for (GameState.Enemy enemy : enemies) {
+            ObjectNode enemyNode = manager.createObjectNode();
+            enemyNode.put("x", enemy.x());
+            enemyNode.put("y", enemy.y());
+            enemyNode.put("type", enemy.type());
+            enemyNodes.add(enemyNode);
+        }
+        root.set("enemies", enemyNodes);
+
         if (spawnX != null && spawnY != null) {
             ObjectNode spawn = manager.createObjectNode();
             spawn.put("x", spawnX);
@@ -82,8 +97,24 @@ public class LevelLoader {
     private static LevelData parseLevel(JsonNode root) {
         int[][] map = parseMap(root);
         List<GameState.Portal> portals = parsePortals(root);
+        List<GameState.Enemy> enemies = parseEnemies(root);
         Integer[] spawn = parseSpawn(root);
-        return new LevelData(map, portals, spawn[0], spawn[1]);
+        return new LevelData(map, portals, enemies, spawn[0], spawn[1]);
+    }
+    
+    private static List<GameState.Enemy> parseEnemies(JsonNode root) {
+        List<GameState.Enemy> enemies = new ArrayList<>();
+        JsonNode enemyNodes = root.get("enemies");
+        if (enemyNodes == null) {
+            return enemies;
+        }
+        for (JsonNode enemyNode : enemyNodes) {
+            int x = enemyNode.get("x").asInt();
+            int y = enemyNode.get("y").asInt();
+            String type = enemyNode.has("type") ? enemyNode.get("type").asText() : "basic";
+            enemies.add(new GameState.Enemy(x, y, type));
+        }
+        return enemies;
     }
 
     private static int[][] parseMap(JsonNode root) {
@@ -130,6 +161,6 @@ public class LevelLoader {
         return new Integer[]{xNode.asInt(), yNode.asInt()};
     }
 
-    public record LevelData(int[][] map, List<GameState.Portal> portals, Integer spawnX, Integer spawnY) {
+    public record LevelData(int[][] map, List<GameState.Portal> portals, List<GameState.Enemy> enemies, Integer spawnX, Integer spawnY) {
     }
 }

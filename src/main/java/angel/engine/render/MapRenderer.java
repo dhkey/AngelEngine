@@ -38,6 +38,18 @@ public class MapRenderer {
             tileSize - 16, tileSize - 16);
     }
 
+    graphics.setFill(Color.web("#ff4444"));
+    for (GameState.Enemy enemy : state.enemies) {
+        graphics.fillOval(enemy.x() * tileSize + 6, enemy.y() * tileSize + 6,
+            tileSize - 12, tileSize - 12);
+    }
+
+    graphics.setFill(Color.YELLOW);
+    for (GameState.Projectile p : state.projectiles) {
+        graphics.fillOval(p.x * tileSize + 10, p.y * tileSize + 10,
+                tileSize - 20, tileSize - 20);
+    }
+
         graphics.restore();
     }
 }

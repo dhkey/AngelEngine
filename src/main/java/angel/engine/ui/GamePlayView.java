@@ -5,6 +5,7 @@ import angel.engine.core.GameState;
 import angel.engine.core.LevelLoader;
 import angel.engine.render.MapRenderer;
 import java.nio.file.Path;
+import javafx.animation.AnimationTimer;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -24,6 +25,8 @@ public class GamePlayView {
     private Canvas canvas;
     private GraphicsContext graphics;
     private int tileSize = 32;
+    private GameHUD gameHUD;
+    private AnimationTimer gameLoop;
 
     public Scene createScene(Path levelPath) throws Exception {
         this.levelPath = levelPath;
@@ -38,26 +41,51 @@ public class GamePlayView {
     root.setStyle("-fx-background-color: #1f2330;");
 
         StackPane canvasPane = buildCanvasPane();
-    root.setCenter(canvasPane);
-    BorderPane.setMargin(canvasPane, Insets.EMPTY);
+        root.setCenter(canvasPane);
+        BorderPane.setMargin(canvasPane, Insets.EMPTY);
 
-    Scene scene = new Scene(root, 900, 600);
-    scene.setFill(javafx.scene.paint.Color.web("#1f2330"));
+        Scene scene = new Scene(root, 900, 600);
+        scene.setFill(javafx.scene.paint.Color.web("#1f2330"));
         scene.setOnKeyPressed(e -> handleKey(e.getCode()));
 
         canvas.widthProperty().addListener((obs, oldValue, newValue) -> render());
         canvas.heightProperty().addListener((obs, oldValue, newValue) -> render());
-        render();
+        
+        startGameLoop();
 
         return scene;
     }
 
+    private void startGameLoop() {
+        gameLoop = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                update();
+                render();
+            }
+        };
+        gameLoop.start();
+    }
+    
+    private void update() {
+        if (state != null) {
+            engine.updateProjectiles(state);
+        }
+    }
+
     private StackPane buildCanvasPane() {
-    StackPane container = new StackPane(canvas);
-    container.setStyle("-fx-background-color: #1f2330; -fx-background-radius: 0;");
+        StackPane container = new StackPane();
+        container.setStyle("-fx-background-color: #1f2330; -fx-background-radius: 0;");
+        
+        container.getChildren().add(canvas);
         StackPane.setAlignment(canvas, Pos.CENTER);
         canvas.widthProperty().bind(container.widthProperty());
         canvas.heightProperty().bind(container.heightProperty());
+        
+        gameHUD = new GameHUD();
+        container.getChildren().add(gameHUD);
+        StackPane.setAlignment(gameHUD, Pos.TOP_LEFT);
+        
         container.setMinSize(0, 0);
         return container;
     }
@@ -69,10 +97,12 @@ public class GamePlayView {
         if (code == KeyCode.A || code == KeyCode.LEFT) moved = engine.move(state, -1, 0);
         if (code == KeyCode.D || code == KeyCode.RIGHT) moved = engine.move(state, 1, 0);
         if (code == KeyCode.R) state.resetPlayer();
+        if (code == KeyCode.SPACE) engine.shoot(state);
+        
         if (moved) {
             handlePortalStep();
         }
-        render();
+        
     }
 
     private void handlePortalStep() {
@@ -86,7 +116,7 @@ public class GamePlayView {
             loadLevel(targetPath, levelPath.getFileName().toString());
             levelPath = targetPath;
         } catch (Exception ex) {
-            // ignore load errors for now
+            
         }
     }
 
@@ -131,7 +161,10 @@ public class GamePlayView {
         if (scale <= 0) {
             return;
         }
-        renderer.render(graphics, state, tileSize, true, scale, offsetX, offsetY);
+        renderer.render(graphics, state, tileSize, false, scale, offsetX, offsetY);
+        if (gameHUD != null) {
+            gameHUD.update(state);
+        }
     }
 
     private double[] computeTransform() {

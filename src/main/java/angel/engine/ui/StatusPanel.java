@@ -91,8 +91,9 @@ public class StatusPanel extends VBox {
         ToggleButton wallButton = createToolButton("Wall", BuildTool.WALL);
         ToggleButton emptyButton = createToolButton("Erase", BuildTool.EMPTY);
         ToggleButton portalButton = createToolButton("Portal", BuildTool.PORTAL);
+        ToggleButton enemyButton = createToolButton("Enemy", BuildTool.ENEMY);
 
-        VBox box = new VBox(8, title, wallButton, emptyButton, portalButton);
+        VBox box = new VBox(8, title, wallButton, emptyButton, portalButton, enemyButton);
         box.setAlignment(Pos.TOP_LEFT);
         box.setPadding(new Insets(0, 0, 0, 8));
         return box;

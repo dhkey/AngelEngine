@@ -35,6 +35,7 @@ public class EngineView {
     private Runnable onExit;
     private BuildTool buildTool = BuildTool.WALL;
     private boolean allowBuild = false;
+    private GameHUD gameHUD;
 
     public Scene createScene(String mode) throws Exception {
         return createScene(mode, null, null, false);
@@ -52,7 +53,7 @@ public class EngineView {
         LevelLoader.LevelData levelData = levelPath == null
                 ? LevelLoader.loadLevel("level_1.json")
                 : LevelLoader.loadLevel(levelPath);
-    state = new GameState(levelData.map(), levelData.portals(), levelData.spawnX(), levelData.spawnY());
+        state = new GameState(levelData.map(), levelData.portals(), levelData.enemies(), levelData.spawnX(), levelData.spawnY());
         this.levelPath = levelPath;
         this.onExit = onExit;
         this.allowBuild = allowBuild;
@@ -110,11 +111,20 @@ public class EngineView {
     }
 
     private StackPane buildCanvasPane() {
-        StackPane container = new StackPane(canvas);
+        StackPane container = new StackPane();
         container.setStyle("-fx-background-color: #1f2330; -fx-background-radius: 8;");
+        
+        
+        container.getChildren().add(canvas);
         StackPane.setAlignment(canvas, Pos.CENTER);
         canvas.widthProperty().bind(container.widthProperty());
         canvas.heightProperty().bind(container.heightProperty());
+        
+        
+        gameHUD = new GameHUD();
+        container.getChildren().add(gameHUD);
+        StackPane.setAlignment(gameHUD, Pos.TOP_LEFT);
+        
         container.setMinSize(0, 0);
         return container;
     }
@@ -157,7 +167,7 @@ public class EngineView {
             return;
         }
         try {
-            LevelLoader.saveLevel(levelPath, state.map, state.portals, state.startX, state.startY);
+            LevelLoader.saveLevel(levelPath, state.map, state.portals, state.enemies, state.startX, state.startY);
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Level saved", ButtonType.OK);
             alert.setHeaderText(null);
             alert.showAndWait();
@@ -199,8 +209,15 @@ public class EngineView {
             return;
         }
         switch (buildTool) {
-            case WALL -> state.map[y][x] = 1;
-            case EMPTY -> state.map[y][x] = 0;
+            case WALL -> {
+                state.map[y][x] = 1;
+                removeEnemy(x, y);
+            }
+            case EMPTY -> {
+                state.map[y][x] = 0;
+                removeEnemy(x, y);
+            }
+            case ENEMY -> handleEnemyPlacement(x, y);
             case PORTAL -> {
                 boolean created = handlePortalPlacement(x, y);
                 if (created) {
@@ -209,6 +226,18 @@ public class EngineView {
             }
         }
         render();
+    }
+
+    private void handleEnemyPlacement(int x, int y) {
+        if (state.map[y][x] == 1) { 
+            return;
+        }
+        removeEnemy(x, y);
+        state.enemies.add(new GameState.Enemy(x, y, "basic"));
+    }
+
+    private void removeEnemy(int x, int y) {
+        state.enemies.removeIf(e -> e.x() == x && e.y() == y);
     }
 
     private boolean handlePortalPlacement(int x, int y) {
@@ -261,7 +290,7 @@ public class EngineView {
                 spawnX = linked[0];
                 spawnY = linked[1];
             }
-            state = new GameState(levelData.map(), levelData.portals(), spawnX, spawnY);
+            state = new GameState(levelData.map(), levelData.portals(), levelData.enemies(), spawnX, spawnY);
             levelPath = targetPath;
         } catch (Exception ex) {
             Alert alert = new Alert(Alert.AlertType.ERROR,
@@ -283,6 +312,9 @@ public class EngineView {
 
         renderer.render(graphics, state, tileSize, showGrid, scale, offsetX, offsetY);
         statusPanel.update(state, tileSize);
+        if (gameHUD != null) {
+            gameHUD.update(state);
+        }
     }
 
     private double[] computeTransform() {
