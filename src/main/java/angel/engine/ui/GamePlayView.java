@@ -32,15 +32,17 @@ public class GamePlayView {
         canvas = new Canvas();
         graphics = canvas.getGraphicsContext2D();
 
-        BorderPane root = new BorderPane();
-        root.setPadding(new Insets(8));
-        root.setMinSize(0, 0);
+    BorderPane root = new BorderPane();
+    root.setPadding(Insets.EMPTY);
+    root.setMinSize(0, 0);
+    root.setStyle("-fx-background-color: #1f2330;");
 
         StackPane canvasPane = buildCanvasPane();
-        root.setCenter(canvasPane);
-        BorderPane.setMargin(canvasPane, new Insets(8));
+    root.setCenter(canvasPane);
+    BorderPane.setMargin(canvasPane, Insets.EMPTY);
 
-        Scene scene = new Scene(root, 900, 600);
+    Scene scene = new Scene(root, 900, 600);
+    scene.setFill(javafx.scene.paint.Color.web("#1f2330"));
         scene.setOnKeyPressed(e -> handleKey(e.getCode()));
 
         canvas.widthProperty().addListener((obs, oldValue, newValue) -> render());
@@ -51,8 +53,8 @@ public class GamePlayView {
     }
 
     private StackPane buildCanvasPane() {
-        StackPane container = new StackPane(canvas);
-        container.setStyle("-fx-background-color: #1f2330; -fx-background-radius: 8;");
+    StackPane container = new StackPane(canvas);
+    container.setStyle("-fx-background-color: #1f2330; -fx-background-radius: 0;");
         StackPane.setAlignment(canvas, Pos.CENTER);
         canvas.widthProperty().bind(container.widthProperty());
         canvas.heightProperty().bind(container.heightProperty());
