@@ -10,7 +10,6 @@ import angel.engine.ui.LevelSelectView;
 import angel.engine.ui.LoadErrorView;
 import angel.engine.ui.StartMenuView;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
@@ -19,20 +18,14 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.Scene;
 import javafx.scene.layout.GridPane;
-import javafx.stage.DirectoryChooser;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
-import java.io.File;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 public class Main extends Application {
 
@@ -113,7 +106,6 @@ public class Main extends Application {
         GameSelectView view = new GameSelectView(games,
                 game -> showLevelSelect(stage, game, false),
                 game -> handlePlayGame(game),
-        game -> handleBuildGame(game),
                 () -> showStartMenu(stage));
         stage.setTitle("Angel Engine - Select game");
         stage.setScene(view.createScene());
@@ -147,221 +139,6 @@ public class Main extends Application {
             errorStage.setScene(errorView.createScene(ex.getMessage(), errorStage::close));
             errorStage.show();
         }
-    }
-
-    private void handleBuildGame(String gameName) {
-        String mvnPath = findMavenExecutable();
-        if (mvnPath == null) {
-            Alert alert = new Alert(Alert.AlertType.WARNING,
-                    "Maven executable (mvn) not found. Please locate it manually.",
-                    ButtonType.OK, ButtonType.CANCEL);
-            alert.setHeaderText("Build Requirement Missing");
-            Optional<ButtonType> result = alert.showAndWait();
-            if (result.isEmpty() || result.get() != ButtonType.OK) {
-                return;
-            }
-
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.setTitle("Locate Maven Executable (mvn)");
-            File mvnFile = fileChooser.showOpenDialog(null);
-            if (mvnFile == null) {
-                return;
-            }
-            mvnPath = mvnFile.getAbsolutePath();
-        }
-
-        DirectoryChooser directoryChooser = new DirectoryChooser();
-        directoryChooser.setTitle("Select Export Directory");
-        File selectedDirectory = directoryChooser.showDialog(null);
-
-        if (selectedDirectory == null) {
-            return;
-        }
-
-        final String finalMvnPath = mvnPath;
-        Alert alert = new Alert(Alert.AlertType.INFORMATION,
-                "Building game package for " + gameName + ". This may take a few minutes...",
-                ButtonType.OK);
-        alert.setHeaderText(null);
-        alert.show();
-
-        new Thread(() -> {
-            boolean success = false;
-            try {
-                ProcessBuilder builder;
-                if (System.getProperty("os.name").toLowerCase().contains("win")) {
-                    builder = new ProcessBuilder("cmd", "/c", finalMvnPath, "clean", "package", "dependency:copy-dependencies");
-                } else {
-                    builder = new ProcessBuilder("sh", "-c", "\"" + finalMvnPath + "\" clean package dependency:copy-dependencies");
-                }
-                
-                builder.directory(Paths.get(System.getProperty("user.dir")).toFile());
-                builder.inheritIO();
-                Process process = builder.start();
-                int exitCode = process.waitFor();
-
-                if (exitCode == 0) {
-                    Path destDir = selectedDirectory.toPath().resolve(gameName);
-                    Files.createDirectories(destDir);
-                    
-                    Path libDir = destDir.resolve("lib");
-                    Path gamesDir = destDir.resolve("games");
-                    Path gameDir = gamesDir.resolve(gameName);
-
-                    Files.createDirectories(libDir);
-                    Files.createDirectories(gamesDir);
-
-                    Path sourceJar = Paths.get("target", "AngelEngine-1.0-SNAPSHOT.jar");
-                    if (Files.exists(sourceJar)) {
-                        Files.copy(sourceJar, destDir.resolve("AngelEngine.jar"), StandardCopyOption.REPLACE_EXISTING);
-                    }
-
-                    Path sourceLibs = Paths.get("target", "dependency");
-                    if (Files.exists(sourceLibs)) {
-                        try (Stream<Path> stream = Files.list(sourceLibs)) {
-                            stream.forEach(path -> {
-                                try {
-                                    Files.copy(path, libDir.resolve(path.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
-                            });
-                        }
-                    }
-
-                    Path sourceGame = gameRepository.getGamesRoot().resolve(gameName);
-                    copyDirectory(sourceGame, gameDir);
-                    createRunScripts(destDir, gameName);
-
-                    success = true;
-                    
-                    final Path finalDestDir = destDir;
-                    Platform.runLater(() -> {
-                         alert.close();
-                         showAlert("Build complete",
-                                 "Game exported to " + finalDestDir.toAbsolutePath());
-                    });
-                    return; 
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-                success = false;
-            }
-
-            boolean finalSuccess = success;
-            Platform.runLater(() -> {
-                if (alert.isShowing()) alert.close();
-                if (!finalSuccess) {
-                    showAlert("Build failed",
-                            "Unable to export game. Check terminal output.");
-                }
-            });
-        }).start();
-    }
-
-    private String findMavenExecutable() {
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            
-            String m2Home = System.getenv("M2_HOME");
-            if (m2Home != null) {
-                Path p = Paths.get(m2Home, "bin", "mvn.cmd");
-                if (Files.exists(p)) return p.toAbsolutePath().toString();
-            }
-            String mavenHome = System.getenv("MAVEN_HOME");
-            if (mavenHome != null) {
-                Path p = Paths.get(mavenHome, "bin", "mvn.cmd");
-                if (Files.exists(p)) return p.toAbsolutePath().toString();
-            }
-            
-            
-            String pathEnv = System.getenv("PATH");
-            if (pathEnv != null) {
-                for (String part : pathEnv.split(File.pathSeparator)) {
-                    Path p = Paths.get(part, "mvn.cmd");
-                    if (Files.exists(p)) return p.toAbsolutePath().toString();
-                }
-            }
-            return "mvn.cmd";
-        }
-
-        
-        String[] specificPaths = {
-            "/usr/bin/mvn",
-            "/usr/local/bin/mvn",
-            "/opt/homebrew/bin/mvn",
-            "/opt/local/bin/mvn",
-            System.getProperty("user.home") + "/bin/mvn",
-            System.getProperty("user.home") + "/.sdkman/candidates/maven/current/bin/mvn"
-        };
-        
-        for (String path : specificPaths) {
-            if (Files.isExecutable(Paths.get(path))) {
-                return path;
-            }
-        }
-        
-        
-        String m2Home = System.getenv("M2_HOME");
-        if (m2Home != null) {
-            Path p = Paths.get(m2Home, "bin", "mvn");
-            if (Files.isExecutable(p)) return p.toAbsolutePath().toString();
-        }
-        
-        String mavenHome = System.getenv("MAVEN_HOME");
-        if (mavenHome != null) {
-            Path p = Paths.get(mavenHome, "bin", "mvn");
-            if (Files.isExecutable(p)) return p.toAbsolutePath().toString();
-        }
-
-        
-        String pathEnv = System.getenv("PATH");
-        if (pathEnv != null) {
-            for (String part : pathEnv.split(File.pathSeparator)) {
-                Path p = Paths.get(part, "mvn");
-                if (Files.isExecutable(p)) {
-                    return p.toAbsolutePath().toString();
-                }
-            }
-        }
-        
-        
-        return null;
-    }
-
-    private void copyDirectory(Path source, Path target) throws IOException {
-        Files.walk(source).forEach(sourcePath -> {
-            Path targetPath = target.resolve(source.relativize(sourcePath));
-            try {
-                if (Files.isDirectory(sourcePath)) {
-                    Files.createDirectories(targetPath);
-                } else {
-                    Files.copy(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
-    }
-
-    private void createRunScripts(Path destDir, String gameName) throws IOException {
-        Path batchFile = destDir.resolve("run.bat");
-        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(batchFile))) {
-            writer.println("@echo off");
-            writer.println("setlocal");
-            writer.println("set \"GAME_NAME=" + gameName + "\"");
-            writer.println("set \"CP=AngelEngine.jar;lib/*\"");
-            writer.println("java -cp \"%CP%\" angel.engine.Launcher \"%GAME_NAME%\"");
-            writer.println("endlocal");
-        }
-
-        Path shellFile = destDir.resolve("run.sh");
-        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(shellFile))) {
-            writer.println("#!/bin/sh");
-            writer.println("GAME_NAME=\"" + gameName + "\"");
-            writer.println("CP=\"AngelEngine.jar:lib/*\"");
-            writer.println("java -cp \"$CP\" angel.engine.Launcher \"$GAME_NAME\"");
-        }
-        shellFile.toFile().setExecutable(true);
     }
 
     private void showLevelSelect(Stage stage, String gameName, boolean createFlow) {

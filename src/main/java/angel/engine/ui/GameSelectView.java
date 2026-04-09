@@ -17,15 +17,13 @@ public class GameSelectView {
     private final List<String> games;
     private final Consumer<String> onSelect;
     private final Consumer<String> onPlay;
-    private final Consumer<String> onBuild;
     private final Runnable onBack;
 
     public GameSelectView(List<String> games, Consumer<String> onSelect, Consumer<String> onPlay,
-                          Consumer<String> onBuild, Runnable onBack) {
+                          Runnable onBack) {
         this.games = games;
         this.onSelect = onSelect;
         this.onPlay = onPlay;
-        this.onBuild = onBuild;
         this.onBack = onBack;
     }
 
@@ -36,7 +34,7 @@ public class GameSelectView {
         ListView<String> listView = new ListView<>();
         listView.getItems().addAll(games);
         listView.setStyle("-fx-background-color: #0d1117; -fx-control-inner-background: #0d1117; -fx-text-fill: #f0f6fc;");
-    listView.setCellFactory(view -> new GameCell(onPlay, onBuild));
+    listView.setCellFactory(view -> new GameCell(onPlay));
         listView.setPlaceholder(new Label("No games found"));
 
         Button openButton = new Button("Open");
@@ -63,15 +61,12 @@ public class GameSelectView {
 
     private static class GameCell extends javafx.scene.control.ListCell<String> {
         private final Consumer<String> onPlay;
-        private final Consumer<String> onBuild;
         private final Label nameLabel;
         private final Button playButton;
-        private final Button buildButton;
         private final HBox layout;
 
-        private GameCell(Consumer<String> onPlay, Consumer<String> onBuild) {
+        private GameCell(Consumer<String> onPlay) {
             this.onPlay = onPlay;
-            this.onBuild = onBuild;
             nameLabel = new Label();
             nameLabel.setStyle("-fx-text-fill: #f0f6fc;");
             playButton = new Button("Play");
@@ -81,16 +76,9 @@ public class GameSelectView {
                     onPlay.accept(item);
                 }
             });
-            buildButton = new Button("Build");
-            buildButton.setOnAction(e -> {
-                String item = getItem();
-                if (item != null) {
-                    onBuild.accept(item);
-                }
-            });
             HBox spacer = new HBox();
             HBox.setHgrow(spacer, Priority.ALWAYS);
-            layout = new HBox(12, nameLabel, spacer, playButton, buildButton);
+            layout = new HBox(12, nameLabel, spacer, playButton);
             layout.setAlignment(Pos.CENTER_LEFT);
         }
 

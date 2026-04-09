@@ -104,7 +104,7 @@ public class EngineView {
 
         canvas.widthProperty().addListener((obs, oldValue, newValue) -> render());
         canvas.heightProperty().addListener((obs, oldValue, newValue) -> render());
-        canvas.setOnMouseClicked(this::handleBuildClick);
+    canvas.setOnMouseClicked(this::handleBuildClick);
         render();
 
         return scene;
