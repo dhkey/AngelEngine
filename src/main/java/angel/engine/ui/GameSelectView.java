@@ -19,8 +19,7 @@ public class GameSelectView {
     private final Consumer<String> onPlay;
     private final Runnable onBack;
 
-    public GameSelectView(List<String> games, Consumer<String> onSelect, Consumer<String> onPlay,
-                          Runnable onBack) {
+    public GameSelectView(List<String> games, Consumer<String> onSelect, Consumer<String> onPlay, Runnable onBack) {
         this.games = games;
         this.onSelect = onSelect;
         this.onPlay = onPlay;
@@ -34,7 +33,7 @@ public class GameSelectView {
         ListView<String> listView = new ListView<>();
         listView.getItems().addAll(games);
         listView.setStyle("-fx-background-color: #0d1117; -fx-control-inner-background: #0d1117; -fx-text-fill: #f0f6fc;");
-    listView.setCellFactory(view -> new GameCell(onPlay));
+        listView.setCellFactory(view -> new GameCell(onPlay));
         listView.setPlaceholder(new Label("No games found"));
 
         Button openButton = new Button("Open");
@@ -62,15 +61,15 @@ public class GameSelectView {
     private static class GameCell extends javafx.scene.control.ListCell<String> {
         private final Consumer<String> onPlay;
         private final Label nameLabel;
-        private final Button playButton;
+        private final Button runButton;
         private final HBox layout;
 
         private GameCell(Consumer<String> onPlay) {
             this.onPlay = onPlay;
             nameLabel = new Label();
             nameLabel.setStyle("-fx-text-fill: #f0f6fc;");
-            playButton = new Button("Play");
-            playButton.setOnAction(e -> {
+            runButton = new Button("Run game");
+            runButton.setOnAction(e -> {
                 String item = getItem();
                 if (item != null) {
                     onPlay.accept(item);
@@ -78,7 +77,7 @@ public class GameSelectView {
             });
             HBox spacer = new HBox();
             HBox.setHgrow(spacer, Priority.ALWAYS);
-            layout = new HBox(12, nameLabel, spacer, playButton);
+            layout = new HBox(12, nameLabel, spacer, runButton);
             layout.setAlignment(Pos.CENTER_LEFT);
         }
 
