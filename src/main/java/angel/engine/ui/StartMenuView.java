@@ -1,5 +1,6 @@
 package angel.engine.ui;
 
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -19,20 +20,31 @@ public class StartMenuView {
 
     public Scene createScene() {
         Label title = new Label("Angel Engine");
-        title.setStyle("-fx-font-size: 28px; -fx-text-fill: #f0f6fc;");
+        title.getStyleClass().add("engine-title");
+
+        Label subtitle = new Label("Build worlds. Tune systems. Launch games.");
+        subtitle.getStyleClass().add("engine-subtitle");
 
         Button createButton = new Button("Create game");
-        createButton.setPrefWidth(220);
-    createButton.setOnAction(e -> onCreate.run());
+        createButton.setPrefWidth(240);
+        createButton.setOnAction(e -> onCreate.run());
 
         Button editButton = new Button("Edit game");
-        editButton.setPrefWidth(220);
-    editButton.setOnAction(e -> onEdit.run());
+        editButton.getStyleClass().add("engine-button-secondary");
+        editButton.setPrefWidth(240);
+        editButton.setOnAction(e -> onEdit.run());
 
-        VBox menu = new VBox(16, title, createButton, editButton);
+        VBox menu = new VBox(14, title, subtitle, createButton, editButton);
         menu.setAlignment(Pos.CENTER);
-        menu.setStyle("-fx-background-color: #0d1117;");
+        menu.setMaxWidth(500);
+        menu.setPadding(new Insets(34));
+        menu.getStyleClass().add("engine-shell");
 
-        return new Scene(new StackPane(menu), 900, 600);
+        StackPane root = new StackPane(menu);
+        root.setPadding(new Insets(40));
+        root.getStyleClass().add("engine-menu-root");
+
+        Scene scene = new Scene(root, 900, 600);
+        return EngineTheme.apply(scene, "engine-menu-root");
     }
 }

@@ -11,7 +11,6 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 
 public class StatusPanel extends VBox {
 
@@ -28,14 +27,23 @@ public class StatusPanel extends VBox {
 
     public StatusPanel() {
         modeLabel = new Label();
+        modeLabel.getStyleClass().add("engine-side-value");
         positionLabel = new Label();
+        positionLabel.getStyleClass().add("engine-side-value");
         stepsLabel = new Label();
+        stepsLabel.getStyleClass().add("engine-side-value");
         mapLabel = new Label();
+        mapLabel.getStyleClass().add("engine-side-value");
         tileLabel = new Label();
+        tileLabel.getStyleClass().add("engine-side-value");
+
+        Label statsTitle = new Label("Engine Stats");
+        statsTitle.getStyleClass().add("engine-side-title");
+        Separator statsSeparator = new Separator();
 
         statsBox = new VBox(8,
-                new Label("Engine Stats"),
-                new Separator(),
+                statsTitle,
+                statsSeparator,
                 modeLabel,
                 positionLabel,
                 stepsLabel,
@@ -51,9 +59,8 @@ public class StatusPanel extends VBox {
         setPadding(new Insets(10));
         setPrefWidth(200);
         setMinWidth(0);
-        setStyle("-fx-background-color: #2b3042; -fx-background-radius: 8; -fx-text-fill: white;");
-        styleLabels(statsBox);
-        styleLabels(toolsBox);
+        setSpacing(12);
+        getStyleClass().add("engine-side-panel");
         setBuildMode(false);
     }
 
@@ -86,7 +93,7 @@ public class StatusPanel extends VBox {
 
     private VBox buildToolsBox() {
         Label title = new Label("Build tools");
-        title.setTextFill(Color.WHITE);
+        title.getStyleClass().add("engine-side-title");
 
         ToggleButton wallButton = createToolButton("Wall", BuildTool.WALL);
         ToggleButton emptyButton = createToolButton("Erase", BuildTool.EMPTY);
@@ -95,16 +102,8 @@ public class StatusPanel extends VBox {
 
         VBox box = new VBox(8, title, wallButton, emptyButton, portalButton, enemyButton);
         box.setAlignment(Pos.TOP_LEFT);
-        box.setPadding(new Insets(0, 0, 0, 8));
+        box.setPadding(new Insets(8, 0, 0, 8));
         return box;
-    }
-
-    private void styleLabels(VBox box) {
-        box.getChildren().forEach(node -> {
-            if (node instanceof Label label) {
-                label.setTextFill(Color.WHITE);
-            }
-        });
     }
 
     private ToggleButton createToolButton(String label, BuildTool tool) {

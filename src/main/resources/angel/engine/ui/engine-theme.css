@@ -1,0 +1,242 @@
+.root.engine-root {
+    -fx-font-family: "Segoe UI", "Inter", "Roboto", "Arial";
+    -fx-base: #0d1320;
+    -fx-background-color: linear-gradient(to bottom right, #0b1120, #0d1526 55%, #0f1f33);
+}
+
+.engine-menu-root,
+.engine-select-root,
+.engine-error-root {
+    -fx-background-color: transparent;
+}
+
+.engine-shell {
+    -fx-background-color: rgba(9, 16, 30, 0.85);
+    -fx-background-radius: 18;
+    -fx-border-color: rgba(120, 188, 255, 0.32);
+    -fx-border-radius: 18;
+    -fx-border-width: 1.2;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 0, 0, 0.55), 20, 0.15, 0, 8);
+}
+
+.engine-title {
+    -fx-font-size: 34px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #e7f1ff;
+}
+
+.engine-subtitle {
+    -fx-font-size: 15px;
+    -fx-text-fill: #91a6c4;
+}
+
+.engine-section-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #d9e8ff;
+}
+
+.engine-error-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #ff6f7d;
+}
+
+.engine-detail-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #bdd0ec;
+}
+
+.button {
+    -fx-background-color: linear-gradient(to bottom, #2e7fe5, #1d56a4);
+    -fx-text-fill: #f1f7ff;
+    -fx-font-weight: 700;
+    -fx-background-radius: 12;
+    -fx-padding: 8 14;
+    -fx-cursor: hand;
+}
+
+.button:hover {
+    -fx-background-color: linear-gradient(to bottom, #3f97ff, #2665bd);
+}
+
+.button:pressed {
+    -fx-background-color: linear-gradient(to bottom, #1c4f93, #163d74);
+}
+
+.button.engine-button-secondary {
+    -fx-background-color: linear-gradient(to bottom, #2b3b56, #1f2b42);
+}
+
+.button.engine-button-danger {
+    -fx-background-color: linear-gradient(to bottom, #ad3d49, #7c2b34);
+}
+
+.tool-bar.engine-toolbar {
+    -fx-background-color: rgba(7, 16, 29, 0.78);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(120, 188, 255, 0.26);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.check-box {
+    -fx-text-fill: #c9daf7;
+    -fx-font-weight: 600;
+}
+
+.separator *.line {
+    -fx-border-color: rgba(160, 190, 225, 0.32);
+}
+
+.list-view.engine-list {
+    -fx-background-color: rgba(8, 15, 29, 0.75);
+    -fx-control-inner-background: rgba(8, 15, 29, 0.75);
+    -fx-background-insets: 0;
+    -fx-padding: 4;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(120, 188, 255, 0.22);
+    -fx-border-radius: 12;
+}
+
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #d9e8ff;
+    -fx-font-size: 14px;
+}
+
+.list-cell:filled:selected {
+    -fx-background-color: rgba(60, 128, 209, 0.45);
+    -fx-background-radius: 8;
+}
+
+.list-cell:filled:hover {
+    -fx-background-color: rgba(44, 96, 165, 0.35);
+    -fx-background-radius: 8;
+}
+
+.engine-stage {
+    -fx-background-color: transparent;
+}
+
+.engine-canvas-shell {
+    -fx-background-color: linear-gradient(to bottom, #2b3b59, #1e2d47);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(156, 202, 255, 0.34);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.engine-side-panel {
+    -fx-background-color: rgba(12, 21, 37, 0.9);
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(124, 175, 235, 0.28);
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+}
+
+.engine-side-title {
+    -fx-text-fill: #e5f0ff;
+    -fx-font-size: 15px;
+    -fx-font-weight: 800;
+}
+
+.engine-side-value {
+    -fx-text-fill: #c4d8f5;
+    -fx-font-size: 13px;
+}
+
+.toggle-button {
+    -fx-background-color: linear-gradient(to bottom, #26344d, #1c2639);
+    -fx-text-fill: #d9e8ff;
+    -fx-background-radius: 10;
+    -fx-font-weight: 700;
+}
+
+.toggle-button:selected {
+    -fx-background-color: linear-gradient(to bottom, #3a87e8, #2358a8);
+    -fx-text-fill: #f5f9ff;
+}
+
+.engine-hint-bar {
+    -fx-background-color: rgba(10, 20, 35, 0.86);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(120, 188, 255, 0.22);
+    -fx-border-radius: 10;
+}
+
+.engine-hint-label {
+    -fx-text-fill: #b8cde8;
+    -fx-font-size: 13px;
+}
+
+.engine-hud {
+    -fx-background-color: rgba(8, 18, 31, 0.62);
+    -fx-background-radius: 10;
+    -fx-border-color: rgba(145, 193, 250, 0.35);
+    -fx-border-radius: 10;
+    -fx-padding: 8;
+}
+
+.engine-hud-label {
+    -fx-font-weight: 700;
+    -fx-font-size: 12px;
+    -fx-text-fill: #edf5ff;
+}
+
+.engine-hud-title {
+    -fx-font-weight: 800;
+    -fx-font-size: 11px;
+    -fx-text-fill: #b4d7ff;
+}
+
+.engine-hud-status {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #d0e4ff;
+}
+
+.crafting-overlay-left {
+    -fx-background-color: rgba(21, 27, 31, 0.95);
+    -fx-border-color: rgba(74, 74, 74, 0.9);
+    -fx-border-width: 2;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+
+.crafting-overlay-right {
+    -fx-background-color: rgba(24, 31, 37, 0.95);
+    -fx-border-color: rgba(80, 80, 80, 0.9);
+    -fx-border-width: 2;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
+}
+
+.crafting-overlay-title {
+    -fx-text-fill: #ececec;
+    -fx-font-size: 16px;
+    -fx-font-weight: 800;
+}
+
+.dialog-pane.engine-dialog {
+    -fx-background-color: linear-gradient(to bottom right, #0f1828, #101e33);
+    -fx-border-color: rgba(120, 188, 255, 0.35);
+    -fx-border-width: 1;
+}
+
+.dialog-pane.engine-dialog .header-panel {
+    -fx-background-color: rgba(17, 31, 53, 0.85);
+}
+
+.dialog-pane.engine-dialog .label {
+    -fx-text-fill: #d9e8ff;
+}
+
+.dialog-pane.engine-dialog .text-field {
+    -fx-background-color: rgba(7, 14, 25, 0.9);
+    -fx-text-fill: #f0f6ff;
+    -fx-prompt-text-fill: #8ca7ca;
+    -fx-border-color: rgba(124, 175, 235, 0.4);
+    -fx-background-radius: 8;
+    -fx-border-radius: 8;
+}

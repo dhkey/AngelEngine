@@ -13,6 +13,8 @@ public class ToolbarPanel extends ToolBar {
                         Consumer<Boolean> onGridToggle, boolean gridEnabled,
                         Consumer<Boolean> onBuildToggle, boolean buildEnabled,
                         Runnable onSave, Runnable onExit, boolean showBuildToggle) {
+        getStyleClass().add("engine-toolbar");
+
         Button restartButton = new Button("Restart level");
         restartButton.setOnAction(e -> onRestart.run());
         CheckBox gridToggle = new CheckBox("Grid");
@@ -25,6 +27,7 @@ public class ToolbarPanel extends ToolBar {
 
         if (onExit != null) {
             Button exitButton = new Button("Back");
+            exitButton.getStyleClass().add("engine-button-secondary");
             exitButton.setOnAction(e -> onExit.run());
             getItems().add(exitButton);
         }
@@ -33,6 +36,7 @@ public class ToolbarPanel extends ToolBar {
 
         if (onSave != null) {
             Button saveButton = new Button("Save level");
+            saveButton.getStyleClass().add("engine-button-secondary");
             saveButton.setOnAction(e -> onSave.run());
             getItems().add(saveButton);
         }

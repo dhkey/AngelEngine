@@ -8,8 +8,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ListCell;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 public class GameSelectView {
@@ -28,13 +30,18 @@ public class GameSelectView {
 
     public Scene createScene() {
         Label title = new Label("Select game");
-        title.setStyle("-fx-font-size: 22px; -fx-text-fill: #f0f6fc;");
+        title.getStyleClass().add("engine-section-title");
+
+        Label subtitle = new Label("Choose a project to edit or launch.");
+        subtitle.getStyleClass().add("engine-subtitle");
 
         ListView<String> listView = new ListView<>();
         listView.getItems().addAll(games);
-        listView.setStyle("-fx-background-color: #0d1117; -fx-control-inner-background: #0d1117; -fx-text-fill: #f0f6fc;");
+        listView.getStyleClass().add("engine-list");
         listView.setCellFactory(view -> new GameCell(onPlay));
-        listView.setPlaceholder(new Label("No games found"));
+        Label placeholder = new Label("No games found");
+        placeholder.getStyleClass().add("engine-detail-label");
+        listView.setPlaceholder(placeholder);
 
         Button openButton = new Button("Open");
         openButton.setOnAction(e -> {
@@ -45,20 +52,27 @@ public class GameSelectView {
         });
 
         Button backButton = new Button("Back");
+        backButton.getStyleClass().add("engine-button-secondary");
         backButton.setOnAction(e -> onBack.run());
 
         HBox actions = new HBox(12, openButton, backButton);
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        VBox layout = new VBox(16, title, listView, actions);
-        layout.setPadding(new Insets(24));
-        layout.setStyle("-fx-background-color: #0d1117;");
+        VBox layout = new VBox(14, title, subtitle, listView, actions);
+        layout.setPadding(new Insets(28));
+        layout.setMaxWidth(700);
+        layout.getStyleClass().add("engine-shell");
         VBox.setVgrow(listView, Priority.ALWAYS);
 
-        return new Scene(layout, 900, 600);
+        StackPane root = new StackPane(layout);
+        root.setPadding(new Insets(36));
+        root.getStyleClass().add("engine-select-root");
+
+        Scene scene = new Scene(root, 900, 600);
+        return EngineTheme.apply(scene, "engine-select-root");
     }
 
-    private static class GameCell extends javafx.scene.control.ListCell<String> {
+    private static class GameCell extends ListCell<String> {
         private final Consumer<String> onPlay;
         private final Label nameLabel;
         private final Button runButton;
@@ -67,8 +81,9 @@ public class GameSelectView {
         private GameCell(Consumer<String> onPlay) {
             this.onPlay = onPlay;
             nameLabel = new Label();
-            nameLabel.setStyle("-fx-text-fill: #f0f6fc;");
+            nameLabel.getStyleClass().add("engine-detail-label");
             runButton = new Button("Run game");
+            runButton.getStyleClass().add("engine-button-secondary");
             runButton.setOnAction(e -> {
                 String item = getItem();
                 if (item != null) {
@@ -79,6 +94,7 @@ public class GameSelectView {
             HBox.setHgrow(spacer, Priority.ALWAYS);
             layout = new HBox(12, nameLabel, spacer, runButton);
             layout.setAlignment(Pos.CENTER_LEFT);
+            layout.setPadding(new Insets(4, 6, 4, 6));
         }
 
         @Override

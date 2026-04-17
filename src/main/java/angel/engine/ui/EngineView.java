@@ -4,10 +4,13 @@ import angel.engine.core.Engine;
 import angel.engine.core.GameState;
 import angel.engine.core.LevelLoader;
 import angel.engine.render.MapRenderer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
@@ -15,7 +18,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import java.nio.file.Path;
+import javafx.scene.paint.Color;
 
 public class EngineView {
 
@@ -64,31 +67,32 @@ public class EngineView {
         BorderPane root = new BorderPane();
         root.setPadding(new Insets(8));
         root.setMinSize(0, 0);
+        root.getStyleClass().add("engine-stage");
 
-    statusPanel = new StatusPanel();
-    statusPanel.setMode(mode);
-    statusPanel.setOnToolSelected(this::setBuildTool);
-    BorderPane.setMargin(statusPanel, new Insets(8, 8, 8, 8));
+        statusPanel = new StatusPanel();
+        statusPanel.setMode(mode);
+        statusPanel.setOnToolSelected(this::setBuildTool);
+        BorderPane.setMargin(statusPanel, new Insets(8, 8, 8, 8));
 
-    buildMode = false;
-    Runnable saveAction = allowBuild && levelPath != null ? this::saveLevel : null;
+        buildMode = false;
+        Runnable saveAction = allowBuild && levelPath != null ? this::saveLevel : null;
 
-    ToolbarPanel toolbar = new ToolbarPanel(
-        this::restartLevel,
-        this::toggleGrid,
-        showGrid,
-        this::setBuildMode,
-        buildMode,
-        saveAction,
-        onExit,
-        allowBuild
-    );
+        ToolbarPanel toolbar = new ToolbarPanel(
+                this::restartLevel,
+                this::toggleGrid,
+                showGrid,
+                this::setBuildMode,
+                buildMode,
+                saveAction,
+                onExit,
+                allowBuild
+        );
 
         canvasContainer = buildCanvasPane();
-    hintBar = new HintBar();
-    hintBar.setBuildMode(buildMode);
-    statusPanel.setBuildMode(buildMode && allowBuild);
-    statusPanel.setBuildTool(buildTool);
+        hintBar = new HintBar();
+        hintBar.setBuildMode(buildMode);
+        statusPanel.setBuildMode(buildMode && allowBuild);
+        statusPanel.setBuildTool(buildTool);
 
         root.setTop(toolbar);
         root.setCenter(canvasContainer);
@@ -100,11 +104,13 @@ public class EngineView {
         BorderPane.setMargin(hintBar, new Insets(0, 8, 8, 8));
 
         Scene scene = new Scene(root, 900, 600);
+        scene.setFill(Color.web("#1e2c44"));
+        EngineTheme.apply(scene, "engine-stage");
         scene.setOnKeyPressed(e -> handleKey(e.getCode()));
 
         canvas.widthProperty().addListener((obs, oldValue, newValue) -> render());
         canvas.heightProperty().addListener((obs, oldValue, newValue) -> render());
-    canvas.setOnMouseClicked(this::handleBuildClick);
+        canvas.setOnMouseClicked(this::handleBuildClick);
         render();
 
         return scene;
@@ -112,19 +118,17 @@ public class EngineView {
 
     private StackPane buildCanvasPane() {
         StackPane container = new StackPane();
-        container.setStyle("-fx-background-color: #1f2330; -fx-background-radius: 8;");
-        
-        
+        container.getStyleClass().add("engine-canvas-shell");
+
         container.getChildren().add(canvas);
         StackPane.setAlignment(canvas, Pos.CENTER);
         canvas.widthProperty().bind(container.widthProperty());
         canvas.heightProperty().bind(container.heightProperty());
-        
-        
+
         gameHUD = new GameHUD();
         container.getChildren().add(gameHUD);
         StackPane.setAlignment(gameHUD, Pos.TOP_LEFT);
-        
+
         container.setMinSize(0, 0);
         return container;
     }
@@ -135,7 +139,7 @@ public class EngineView {
         if (code == KeyCode.S || code == KeyCode.DOWN) moved = engine.move(state, 0, 1);
         if (code == KeyCode.A || code == KeyCode.LEFT) moved = engine.move(state, -1, 0);
         if (code == KeyCode.D || code == KeyCode.RIGHT) moved = engine.move(state, 1, 0);
-    if (code == KeyCode.R) restartLevel();
+        if (code == KeyCode.R) restartLevel();
         if (moved) {
             handlePortalStep();
             render();
@@ -170,12 +174,14 @@ public class EngineView {
             LevelLoader.saveLevel(levelPath, state.map, state.portals, state.enemies, state.startX, state.startY);
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Level saved", ButtonType.OK);
             alert.setHeaderText(null);
+            EngineTheme.styleDialog(alert);
             alert.showAndWait();
         } catch (Exception ex) {
             Alert alert = new Alert(Alert.AlertType.ERROR,
                     ex.getMessage() == null ? "Failed to save level" : ex.getMessage(),
                     ButtonType.OK);
             alert.setHeaderText(null);
+            EngineTheme.styleDialog(alert);
             alert.showAndWait();
         }
     }
@@ -247,10 +253,11 @@ public class EngineView {
             return true;
         }
 
-        javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog();
+        TextInputDialog dialog = new TextInputDialog();
         dialog.setTitle("Create portal");
         dialog.setHeaderText("Target level file (e.g. level_2.json)");
         dialog.setContentText("Target:");
+        EngineTheme.styleDialog(dialog);
         return dialog.showAndWait().map(target -> {
             String trimmed = target.trim();
             if (trimmed.isEmpty()) {
@@ -273,11 +280,12 @@ public class EngineView {
         GameState.Portal portal = state.portals.get(index);
         Path currentPath = levelPath;
         Path targetPath = currentPath.getParent().resolve(portal.target());
-        if (!java.nio.file.Files.exists(targetPath)) {
+        if (!Files.exists(targetPath)) {
             Alert alert = new Alert(Alert.AlertType.ERROR,
                     "Target level not found: " + portal.target(),
                     ButtonType.OK);
             alert.setHeaderText(null);
+            EngineTheme.styleDialog(alert);
             alert.showAndWait();
             return;
         }
@@ -297,6 +305,7 @@ public class EngineView {
                     ex.getMessage() == null ? "Failed to load target level" : ex.getMessage(),
                     ButtonType.OK);
             alert.setHeaderText(null);
+            EngineTheme.styleDialog(alert);
             alert.showAndWait();
         }
     }

@@ -6,6 +6,8 @@ import angel.engine.data.GameRepository;
 import angel.engine.ui.EngineView;
 import angel.engine.ui.GamePlayView;
 import angel.engine.ui.GameSelectView;
+import angel.engine.ui.EngineTheme;
+import angel.engine.ui.CraftingEditorView;
 import angel.engine.ui.LevelSelectView;
 import angel.engine.ui.LoadErrorView;
 import angel.engine.ui.StartMenuView;
@@ -62,6 +64,7 @@ public class Main extends Application {
         dialog.setTitle("Create game");
         dialog.setHeaderText("New game name");
         dialog.setContentText("Name:");
+        EngineTheme.styleDialog(dialog);
 
         Optional<String> result = dialog.showAndWait();
         if (result.isEmpty()) {
@@ -126,9 +129,10 @@ public class Main extends Application {
         }
         String levelFile = levels.get(0);
         Path levelPath = gameRepository.getLevelPath(gameName, levelFile);
+        Path gameConfigPath = gameRepository.getGamesRoot().resolve(gameName).resolve("game.json");
         try {
             Stage playStage = new Stage();
-            Scene scene = gamePlayView.createScene(levelPath);
+            Scene scene = gamePlayView.createScene(levelPath, gameConfigPath);
             playStage.setTitle("Angel Engine - Play: " + gameName);
             playStage.setScene(scene);
             playStage.show();
@@ -155,6 +159,7 @@ public class Main extends Application {
         level -> openPlayWindow(gameName, level),
         order -> saveLevelOrder(gameName, order),
         () -> handleCreateLevel(stage, gameName),
+        () -> openCraftEditor(stage, gameName),
                 () -> {
                     if (createFlow) {
                         showStartMenu(stage);
@@ -187,6 +192,7 @@ public class Main extends Application {
         grid.add(new Label("Height:"), 0, 2);
         grid.add(heightField, 1, 2);
         dialog.getDialogPane().setContent(grid);
+        EngineTheme.styleDialog(dialog);
 
         dialog.setResultConverter(button -> {
             if (button != ButtonType.OK) {
@@ -256,11 +262,23 @@ public class Main extends Application {
         }
     }
 
+    private void openCraftEditor(Stage stage, String gameName) {
+        Path gameConfigPath = gameRepository.getGamesRoot().resolve(gameName).resolve("game.json");
+        CraftingEditorView editorView = new CraftingEditorView(
+                gameConfigPath,
+                () -> showLevelSelect(stage, gameName, false)
+        );
+        stage.setTitle("Angel Engine - Craft editor: " + gameName);
+        stage.setScene(editorView.createScene());
+        stage.show();
+    }
+
     private void openPlayWindow(String gameName, String levelFile) {
         Path levelPath = gameRepository.getLevelPath(gameName, levelFile);
+        Path gameConfigPath = gameRepository.getGamesRoot().resolve(gameName).resolve("game.json");
         try {
             Stage playStage = new Stage();
-            Scene scene = gamePlayView.createScene(levelPath);
+            Scene scene = gamePlayView.createScene(levelPath, gameConfigPath);
             playStage.setTitle("Angel Engine - Play: " + gameName);
             playStage.setScene(scene);
             playStage.show();
@@ -300,6 +318,7 @@ public class Main extends Application {
         Alert alert = new Alert(Alert.AlertType.ERROR, message, ButtonType.OK);
         alert.setTitle(title);
         alert.setHeaderText(null);
+        EngineTheme.styleDialog(alert);
         alert.showAndWait();
     }
 

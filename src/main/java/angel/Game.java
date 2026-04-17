@@ -1,6 +1,7 @@
 package angel;
 
 import angel.engine.ui.GamePlayView;
+import angel.engine.ui.EngineTheme;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.application.Application;
@@ -55,7 +56,7 @@ public class Game extends Application {
             }
             
             GamePlayView gameView = new GamePlayView();
-            Scene scene = gameView.createScene(levelPath);
+            Scene scene = gameView.createScene(levelPath, gameConfig);
             
             stage.setTitle(root.has("name") ? root.get("name").asText() : "Angel Game");
             stage.setScene(scene);
@@ -70,6 +71,7 @@ public class Game extends Application {
     private void showError(String message) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setContentText(message);
+        EngineTheme.styleDialog(alert);
         alert.show();
     }
 
