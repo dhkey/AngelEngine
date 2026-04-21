@@ -153,19 +153,15 @@ public class CraftingSystem {
     }
 
     public void saveToGameConfig(Path gameConfigPath) throws IOException {
+        saveToGameConfig(gameConfigPath, null);
+    }
+
+    public void saveToGameConfig(Path gameConfigPath, CraftingInventory inventory) throws IOException {
         if (gameConfigPath == null) {
             return;
         }
         ObjectMapper mapper = new ObjectMapper();
-        ObjectNode root;
-        if (Files.exists(gameConfigPath)) {
-            JsonNode existingRoot = mapper.readTree(gameConfigPath.toFile());
-            root = existingRoot instanceof ObjectNode objectNode
-                    ? objectNode
-                    : mapper.createObjectNode();
-        } else {
-            root = mapper.createObjectNode();
-        }
+        ObjectNode root = readOrCreateRoot(gameConfigPath, mapper);
 
         ObjectNode craftingNode = mapper.createObjectNode();
         ArrayNode elementNodes = mapper.createArrayNode();
@@ -200,8 +196,29 @@ public class CraftingSystem {
             recipeNodes.add(recipeNode);
         }
         craftingNode.set("recipes", recipeNodes);
+        ObjectNode inventoryNode = inventory == null
+                ? readExistingInventoryNode(root)
+                : toInventoryNode(mapper, inventory);
+        if (inventoryNode != null) {
+            craftingNode.set("inventory", inventoryNode);
+        }
         root.set("crafting", craftingNode);
 
+        mapper.writerWithDefaultPrettyPrinter().writeValue(gameConfigPath.toFile(), root);
+    }
+
+    public void saveInventoryToGameConfig(Path gameConfigPath, CraftingInventory inventory) throws IOException {
+        if (gameConfigPath == null) {
+            return;
+        }
+        if (inventory == null) {
+            throw new IllegalArgumentException("Inventory cannot be null");
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectNode root = readOrCreateRoot(gameConfigPath, mapper);
+        ObjectNode craftingNode = readOrCreateCraftingNode(root, mapper);
+        craftingNode.set("inventory", toInventoryNode(mapper, inventory));
+        root.set("crafting", craftingNode);
         mapper.writerWithDefaultPrettyPrinter().writeValue(gameConfigPath.toFile(), root);
     }
 
@@ -265,6 +282,34 @@ public class CraftingSystem {
         }
     }
 
+    public boolean loadInventoryFromGameConfig(Path gameConfigPath, CraftingInventory inventory) throws IOException {
+        if (inventory == null) {
+            throw new IllegalArgumentException("Inventory cannot be null");
+        }
+        if (gameConfigPath == null || !Files.exists(gameConfigPath)) {
+            return false;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(gameConfigPath.toFile());
+        JsonNode crafting = root.get("crafting");
+        if (crafting == null || !crafting.isObject()) {
+            return false;
+        }
+        JsonNode inventoryNode = crafting.get("inventory");
+        if (inventoryNode == null || !inventoryNode.isObject()) {
+            return false;
+        }
+        inventory.clear();
+        inventoryNode.fields().forEachRemaining(entry -> {
+            String itemId = normalizeId(entry.getKey());
+            int amount = entry.getValue().asInt(0);
+            if (!itemId.isBlank() && amount > 0) {
+                inventory.setAmount(itemId, amount);
+            }
+        });
+        return true;
+    }
+
     private CraftingRecipe normalizeRecipe(CraftingRecipe recipe) {
         if (recipe == null) {
             throw new IllegalArgumentException("Recipe cannot be null");
@@ -303,6 +348,42 @@ public class CraftingSystem {
         if (!elementsById.containsKey(itemId)) {
             registerElement(new CraftingElement(itemId, itemId));
         }
+    }
+
+    private static ObjectNode readOrCreateRoot(Path gameConfigPath, ObjectMapper mapper) throws IOException {
+        if (!Files.exists(gameConfigPath)) {
+            return mapper.createObjectNode();
+        }
+        JsonNode existingRoot = mapper.readTree(gameConfigPath.toFile());
+        return existingRoot instanceof ObjectNode objectNode
+                ? objectNode
+                : mapper.createObjectNode();
+    }
+
+    private static ObjectNode readOrCreateCraftingNode(ObjectNode root, ObjectMapper mapper) {
+        JsonNode crafting = root.get("crafting");
+        if (crafting instanceof ObjectNode craftingObject) {
+            return craftingObject.deepCopy();
+        }
+        return mapper.createObjectNode();
+    }
+
+    private static ObjectNode readExistingInventoryNode(ObjectNode root) {
+        JsonNode crafting = root.get("crafting");
+        if (!(crafting instanceof ObjectNode craftingObject)) {
+            return null;
+        }
+        JsonNode inventory = craftingObject.get("inventory");
+        if (inventory instanceof ObjectNode inventoryObject) {
+            return inventoryObject.deepCopy();
+        }
+        return null;
+    }
+
+    private static ObjectNode toInventoryNode(ObjectMapper mapper, CraftingInventory inventory) {
+        ObjectNode inventoryNode = mapper.createObjectNode();
+        inventory.items().forEach(inventoryNode::put);
+        return inventoryNode;
     }
 
     private static String normalizeId(String value) {

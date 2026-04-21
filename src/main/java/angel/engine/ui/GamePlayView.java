@@ -21,7 +21,6 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -50,7 +49,6 @@ public class GamePlayView {
 
     private StackPane gameplayStack;
     private HBox craftingOverlay;
-    private ListView<String> elementListView;
     private ListView<String> recipeListView;
     private ListView<String> inventoryListView;
     private Label inventoryLabel;
@@ -134,23 +132,6 @@ public class GamePlayView {
         Label title = new Label("Crafting");
         title.getStyleClass().add("crafting-overlay-title");
 
-        elementListView = new ListView<>();
-        elementListView.getStyleClass().add("engine-list");
-        elementListView.setPrefHeight(88);
-
-        Label elementTitle = new Label("Elements");
-        elementTitle.getStyleClass().add("engine-side-value");
-
-        TextField newElementId = new TextField();
-        newElementId.setPromptText("item id (e.g. iron_ingot)");
-
-        Button addElementButton = new Button("Add element");
-        addElementButton.getStyleClass().add("engine-button-secondary");
-        addElementButton.setOnAction(e -> addElement(newElementId));
-
-        HBox elementEditor = new HBox(8, newElementId, addElementButton);
-        HBox.setHgrow(newElementId, Priority.ALWAYS);
-
         Label recipeTitle = new Label("Recipes");
         recipeTitle.getStyleClass().add("engine-side-value");
 
@@ -183,9 +164,6 @@ public class GamePlayView {
         VBox leftPanel = new VBox(
                 8,
                 title,
-                elementTitle,
-                elementListView,
-                elementEditor,
                 recipeTitle,
                 recipeListView,
                 footer,
@@ -205,27 +183,9 @@ public class GamePlayView {
         craftingOverlay.setMaxWidth(900);
         craftingOverlay.setMouseTransparent(false);
 
-        refreshElementList();
         refreshRecipeList();
         refreshInventoryLabel();
         return craftingOverlay;
-    }
-
-    private void addElement(TextField idField) {
-        String rawId = idField.getText() == null ? "" : idField.getText().trim();
-        if (rawId.isBlank()) {
-            setCraftingStatus("Element id cannot be empty", false);
-            return;
-        }
-        try {
-            String displayName = formatDisplayName(rawId);
-            craftingSystem.registerElement(new CraftingSystem.CraftingElement(rawId, displayName));
-            refreshElementList();
-            setCraftingStatus("Added element: " + rawId, true);
-            idField.clear();
-        } catch (IllegalArgumentException ex) {
-            setCraftingStatus(ex.getMessage(), false);
-        }
     }
 
     private void craftSelectedRecipe() {
@@ -241,7 +201,12 @@ public class GamePlayView {
         }
         CraftingSystem.CraftingResult craftResult = craftingSystem.craft(recipeId, craftingInventory);
         if (craftResult.success()) {
-            setCraftingStatus(craftResult.message(), true);
+            String saveError = saveInventorySnapshot();
+            if (saveError == null) {
+                setCraftingStatus(craftResult.message(), true);
+            } else {
+                setCraftingStatus(craftResult.message() + " (inventory save failed: " + saveError + ")", false);
+            }
         } else {
             setCraftingStatus("Not enough resources", false);
         }
@@ -254,22 +219,11 @@ public class GamePlayView {
             return;
         }
         try {
-            craftingSystem.saveToGameConfig(gameConfigPath);
+            craftingSystem.saveToGameConfig(gameConfigPath, craftingInventory);
             setCraftingStatus("Crafting saved to " + gameConfigPath.getFileName(), true);
         } catch (IOException ex) {
             setCraftingStatus("Failed to save crafting: " + ex.getMessage(), false);
         }
-    }
-
-    private void refreshElementList() {
-        if (elementListView == null) {
-            return;
-        }
-        List<String> labels = new ArrayList<>();
-        for (CraftingSystem.CraftingElement element : craftingSystem.elements()) {
-            labels.add(element.itemId());
-        }
-        elementListView.getItems().setAll(labels);
     }
 
     private void refreshRecipeList() {
@@ -334,9 +288,6 @@ public class GamePlayView {
         craftingSystem.registerElement(new CraftingSystem.CraftingElement("plank", "Plank"));
         craftingSystem.registerElement(new CraftingSystem.CraftingElement("pickaxe", "Pickaxe"));
 
-        craftingInventory.setAmount("wood", 6);
-        craftingInventory.setAmount("stone", 6);
-
         craftingSystem.registerRecipe(new CraftingSystem.CraftingRecipe(
                 "plank_from_wood",
                 List.of(new CraftingSystem.CraftingStack("wood", 2)),
@@ -353,13 +304,36 @@ public class GamePlayView {
                 "2x plank + 3x stone -> 1x pickaxe"
         ));
 
+        boolean inventoryLoaded = false;
         if (configPath != null) {
             try {
                 craftingSystem.loadFromGameConfig(configPath);
-            } catch (IOException ignored) {
-                // Keep defaults if game config crafting section is missing/invalid.
+                inventoryLoaded = craftingSystem.loadInventoryFromGameConfig(configPath, craftingInventory);
+            } catch (IOException ex) {
+                setCraftingStatus("Failed to load crafting config: " + ex.getMessage(), false);
             }
         }
+        if (!inventoryLoaded) {
+            setDefaultStartingInventory();
+        }
+    }
+
+    private String saveInventorySnapshot() {
+        if (gameConfigPath == null) {
+            return null;
+        }
+        try {
+            craftingSystem.saveInventoryToGameConfig(gameConfigPath, craftingInventory);
+            return null;
+        } catch (IOException ex) {
+            return ex.getMessage();
+        }
+    }
+
+    private void setDefaultStartingInventory() {
+        craftingInventory.clear();
+        craftingInventory.setAmount("wood", 6);
+        craftingInventory.setAmount("stone", 6);
     }
 
     private void handleKey(KeyCode code) {
@@ -454,21 +428,4 @@ public class GamePlayView {
         return new double[]{scale, offsetX, offsetY};
     }
 
-    private static String formatDisplayName(String itemId) {
-        String[] parts = itemId.split("[_\\-\\s]+");
-        StringBuilder builder = new StringBuilder();
-        for (String part : parts) {
-            if (part.isBlank()) {
-                continue;
-            }
-            if (!builder.isEmpty()) {
-                builder.append(' ');
-            }
-            builder.append(Character.toUpperCase(part.charAt(0)));
-            if (part.length() > 1) {
-                builder.append(part.substring(1).toLowerCase());
-            }
-        }
-        return builder.isEmpty() ? itemId : builder.toString();
-    }
 }

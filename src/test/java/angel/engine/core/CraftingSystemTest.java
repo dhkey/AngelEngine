@@ -92,4 +92,62 @@ class CraftingSystemTest {
         assertTrue(loaded.findRecipeById("iron_sword").isPresent());
         assertEquals("Sword", loaded.findElementById("sword").orElseThrow().displayName());
     }
+
+    @Test
+    void saveAndLoadInventoryRoundTrip() throws Exception {
+        Path gameConfig = tempDir.resolve("game.json");
+        Files.writeString(gameConfig, """
+                {
+                  "name": "Test Game",
+                  "levels": ["level_1.json"]
+                }
+                """);
+        CraftingSystem system = new CraftingSystem();
+        CraftingSystem.CraftingInventory inventory = new CraftingSystem.CraftingInventory();
+        inventory.setAmount("wood", 3);
+        inventory.setAmount("stone", 1);
+
+        system.saveInventoryToGameConfig(gameConfig, inventory);
+
+        CraftingSystem.CraftingInventory loadedInventory = new CraftingSystem.CraftingInventory();
+        boolean loaded = system.loadInventoryFromGameConfig(gameConfig, loadedInventory);
+        assertTrue(loaded);
+        assertEquals(3, loadedInventory.amountOf("wood"));
+        assertEquals(1, loadedInventory.amountOf("stone"));
+    }
+
+    @Test
+    void saveCraftingConfigPreservesExistingInventory() throws Exception {
+        Path gameConfig = tempDir.resolve("game.json");
+        Files.writeString(gameConfig, """
+                {
+                  "name": "Test Game",
+                  "levels": ["level_1.json"],
+                  "crafting": {
+                    "inventory": {
+                      "wood": 5,
+                      "stone": 2
+                    }
+                  }
+                }
+                """);
+
+        CraftingSystem system = new CraftingSystem();
+        system.registerElement(new CraftingSystem.CraftingElement("wood", "Wood"));
+        system.registerElement(new CraftingSystem.CraftingElement("plank", "Plank"));
+        system.registerRecipe(new CraftingSystem.CraftingRecipe(
+                "plank_from_wood",
+                List.of(new CraftingSystem.CraftingStack("wood", 2)),
+                new CraftingSystem.CraftingStack("plank", 4),
+                "2x wood -> 4x plank"
+        ));
+
+        system.saveToGameConfig(gameConfig);
+
+        CraftingSystem.CraftingInventory loadedInventory = new CraftingSystem.CraftingInventory();
+        boolean loaded = system.loadInventoryFromGameConfig(gameConfig, loadedInventory);
+        assertTrue(loaded);
+        assertEquals(5, loadedInventory.amountOf("wood"));
+        assertEquals(2, loadedInventory.amountOf("stone"));
+    }
 }
