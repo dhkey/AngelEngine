@@ -1,67 +1,92 @@
-# AngelEngine — 2. kontrolní etapa
+# AngelEngine
 
-V repozitáři je připraveno:
+AngelEngine is a JavaFX-based 2D game editor and player. It supports creating games, managing levels, editing maps, and playing levels with shared runtime logic.
 
-1. Kostra kódu
-   - deklarace tříd, jejich vlastností a metod,
-   - dědičnost a další vazby mezi třídami.
+## Project description
 
-2. Základní technická dokumentace
-   - zjednodušený diagram tříd a jejich vztahů,
-   - popis stavů hry/aplikace,
-   - použité technologie a knihovny.
+The application is centered around two workflows:
 
-1) Kostra kódu
+1. **Edit mode** for game and level authoring (levels, portals, enemies, crafting definitions).
+2. **Play mode** for running levels with movement, combat/projectiles, portal transitions, and crafting.
 
-#Hlavní třídy a jejich odpovědnosti
+### Main capabilities
 
-- angel.engine.Main — hlavní vstup aplikace (menu + navigace mezi obrazovkami).
-- angel.Game — alternativní vstup pro spuštění hry.
-- angel.engine.core.Engine — herní logika (pohyb, aktualizace, interakce).
-- angel.engine.core.GameState — stav levelu a herních entit.
-- angel.engine.core.LevelLoader — načítání/ukládání levelů z/do JSON.
-- angel.engine.core.LevelFactory — vytváření základní struktury levelů.
-- angel.engine.data.GameRepository — práce s katalogem her a levelů.
-- angel.engine.render.MapRenderer — vykreslování mapy a objektů.
-- angel.engine.ui.EngineView — editor levelů.
-- angel.engine.ui.GamePlayView — herní režim.
+- Create and select games from a local filesystem repository.
+- Create, open, reorder, and play levels.
+- Edit map walls, spawn, portals, and enemies in the level editor.
+- Play levels with keyboard controls and level-to-level portal travel.
+- Configure crafting elements/recipes in the Craft Editor (edit flow).
+- Use crafting in gameplay with persisted inventory in `game.json`.
 
-#Dědičnost a vztahy mezi třídami
+## Tech details
 
-Dědičnost:
-- angel.engine.Main extends javafx.application.Application
-- angel.Game extends javafx.application.Application
-- angel.engine.ui.ToolbarPanel extends javafx.scene.control.ToolBar
-- angel.engine.ui.StatusPanel extends javafx.scene.layout.VBox
-- angel.engine.ui.HintBar extends javafx.scene.layout.HBox
-- angel.engine.ui.GameHUD extends javafx.scene.layout.VBox
-- angel.engine.ui.GameSelectView.GameCell extends javafx.scene.control.ListCell<String>
+### Stack
 
-Klíčové vazby (kompozice/závislosti):
-- EngineView používá Engine, GameState, MapRenderer, StatusPanel, ToolbarPanel, HintBar, GameHUD.
-- GamePlayView používá Engine, LevelLoader, MapRenderer, GameHUD.
-- Main propojuje StartMenuView, GameSelectView, LevelSelectView, EngineView, GamePlayView, GameRepository.
+- **Language:** Java 21
+- **UI:** JavaFX (`javafx-controls`, `javafx-graphics`) 21.0.2
+- **Serialization:** Jackson Databind 2.17.2
+- **Build tool:** Maven
+- **Testing:** JUnit 5 (Surefire)
 
----
+### Build plugins
 
-2) Základní technická dokumentace
+- `maven-compiler-plugin` 3.12.1
+- `javafx-maven-plugin` 0.0.8
+- `maven-surefire-plugin` 3.2.5
 
-#Popis stavů hry/aplikace
+## Architecture overview
 
-1. Start Menu — výběr akce (vytvořit hru / upravit hru).
-2. Game Select — výběr existující hry.
-3. Level Select — výběr, vytvoření a řazení levelů.
-4. Editor Mode — editace levelu (stěny, portály, nepřátelé, ukládání).
-5. Play Mode — spuštění levelu a ovládání postavy.
-6. Load/Error State — zobrazení chyb při načítání.
+- `angel.engine.Main`: application entry, scene/navigation orchestration.
+- `angel.engine.data.GameRepository`: filesystem-backed game catalog (`games/<game>/...`).
+- `angel.engine.core.LevelLoader`: JSON load/save boundary for level data.
+- `angel.engine.core.GameState`: shared runtime state for editor and gameplay.
+- `angel.engine.core.Engine`: core movement/combat/projectile logic.
+- `angel.engine.render.MapRenderer`: shared rendering layer.
+- `angel.engine.ui.EngineView`: level editor scene.
+- `angel.engine.ui.GamePlayView`: gameplay scene.
+- `angel.engine.ui.CraftingEditorView`: crafting definition editor.
 
-#Použité technologie a knihovny
+## Data layout and conventions
 
-- Java 21
-- JavaFX (javafx-controls, javafx-graphics)
-- Jackson Databind (JSON)
-- Maven (build)
-- JUnit 5 (testy)
+### Game storage
 
-Konfigurace je v souboru pom.xml.
+- `games/<gameName>/game.json`
+- `games/<gameName>/levels/*.json`
 
+`game.json.levels` is authoritative for level order.
+
+### Level JSON schema
+
+- Required: `width`, `height`, `walls`
+- Optional: `portals`, `enemies`, `spawn`
+
+Map encoding uses `map[y][x]` with:
+- `0 = empty`
+- `1 = wall`
+
+### Crafting persistence
+
+- Crafting definitions are stored under `game.json.crafting`.
+- Gameplay inventory is stored under `game.json.crafting.inventory`.
+- Inventory updates are persisted after successful crafting actions.
+
+## Getting started
+
+### Prerequisites
+
+- JDK 21+
+- Maven 3.9+
+
+### Commands
+
+- Build: `mvn clean compile`
+- Run tests: `mvn test`
+- Run app (main entrypoint): `mvn javafx:run`
+- Package artifacts: `mvn clean package`
+
+## Controls (play mode)
+
+- Move: `WASD` / Arrow keys
+- Restart player: `R`
+- Shoot: `Space`
+- Toggle crafting overlay: `E`
